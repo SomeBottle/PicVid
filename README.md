@@ -54,7 +54,7 @@ Type at the command line: ```php pv.php [-recomp] -v videofile```
 * Video file is in the same directory as **pv.php**  
 * If you use the option ```-recomp``` , it will try to re-encode your video **in order to make it easier to be split.**  
 * If your video file size is small , do not use the option ```-recomp``` , because it may make it bigger.  
-* If you used ```-recomp``` and still get a **TS compression failure** ，please compress the video file by yourself.  
+* If you used ```-recomp``` and still get a **TS compression failure** ，please compress the video file by yourself, or change the config item ```$maxTSFileSize```.    
 
 ------------
 **MIT License.**  
