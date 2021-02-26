@@ -1,0 +1,42 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="referrer" content="no-referrer">
+    <title>PicVid Demo</title>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<!-- Or if you want a more recent alpha version -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/hls.js@alpha"></script> -->
+<video id="video" controls style="width: 1280px; max-width: 100%;"></video>
+<script>
+  var video = document.getElementById('video');
+  var videoSrc = 'https://i.loli.net/2021/02/26/jNV9vuaodzx7CEB.png';
+  var config = {
+	  debug:true
+  };
+  (function (Hls, offset) {
+    var load = Hls.DefaultConfig.loader.prototype.load;
+    Hls.DefaultConfig.loader.prototype.load = function (context, config, callbacks) {
+        if (context.type === 'manifest' || context.type === 'level' || context.responseType === 'arraybuffer') {
+            var onSuccess = callbacks.onSuccess;
+            callbacks.onSuccess = function (response, stats, context) {
+                response.data = response.data.slice(offset);
+                return onSuccess.call(this, response, stats, context);
+            };
+        }
+        return load.call(this, context, config, callbacks);
+    }
+  })(Hls, 69);
+ if (Hls.isSupported()) {
+    var hls = new Hls(config);
+    hls.loadSource(videoSrc);
+    hls.attachMedia(video);
+  }else{
+	  alert('not supported');
+  }
+</script>
