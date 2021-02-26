@@ -30,3 +30,20 @@ You should write your own function that uploads pics to the picbed through the p
 * **$path** is the **absolute path** of the file which is to be uploaded.  
 * **$rawdata** is the raw response that picbed's API returns , in many cases , it is in JSON format.  
 * **$imgurl** is the url of the uploaded pic , usually it is contained in **$rawdata**.  
+* There are 2 values in return: the first one is **the url of the uploaded pic** , the second one is **rawdata**. When **error occurs** during uploading, the first value should be set to **false**.
+
+for example , if you make a function ```upload($path)``` to upload each picture , and it returns with the JSON below:  
+```json
+{"code":0,"data":{"size":"264","url":"https://s1.ax1x.com/2020/09/16/wgnGxf.png"}}  
+```   
+then:  
+```php
+/*PV.PHP UPLOAD PIC, the first return value:<pic url> or <bool:false> in stand of error*/
+function PVUpload($path){
+	//pic upload function
+	$rawdata=upload($path);
+	$parsed_data=json_decode($rawdata,true);
+	$imgurl=$parsed_data['data']['url'];
+	return [(empty($imgurl) ? false : $imgurl),$rawdata];
+}   
+```
