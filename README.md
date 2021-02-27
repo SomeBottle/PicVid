@@ -64,6 +64,7 @@ Type at the command line: ```php pv.php [-recomp] -v videofile```
 
 ## How to play  
 Use [Hls.js](https://github.com/video-dev/hls.js) , also you can take a look at the demo.  
+* I haven't found a way to parse disguised ts source on Safari of iOS because it doesn't support MediaSourceExtension.  
 
 ------------
 **MIT License.**  
