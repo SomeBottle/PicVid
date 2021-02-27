@@ -59,6 +59,9 @@ Type at the command line: ```php pv.php [-recomp] -v videofile```
 * If your video file size is small , do not use the option ```-recomp``` , because it may make it bigger.  
 * If you used ```-recomp``` and still get a **TS compression failure** ，please compress the video file by yourself, or change the config item ```$maxTSFileSize```.    
 
+## Notice  
+* If space exists in the absolute path where **pv.php** lies , it may return **"Video bitrate get failed"** error.  
+
 ## How to play  
 Use [Hls.js](https://github.com/video-dev/hls.js) , also you can take a look at the demo.  
 
