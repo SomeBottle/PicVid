@@ -102,8 +102,22 @@ By using a custom loader which helps you ignore the picture in front of the m3u8
 
 ### On the other hand  
 Just put aside ```video.m3u8.png``` and take a look at ```video.real.m3u8```, you just need to delete the hook code of Hls and add codes to make it alternative for natively m3u8 support browser(Such as Safari):  
-
-
+```javascript
+ var video = document.getElementById('video');
+  var videoSrc = 'video.real.m3u8';
+  var config = {
+	  debug:true
+  };
+ if (Hls.isSupported()) {
+    var hls = new Hls(config);
+    hls.loadSource(videoSrc);
+    hls.attachMedia(video);
+  }else{
+    video.src = videoSrc;
+    alert('你的浏览器自带支持m3u8，如果无法播放请发issue\nYour browser natively support m3u8 playing, create issue if it doesn\'t work.');  
+  }  
+```
+In this way,your video is available in almost all of the main stream web browser.When it comes to deal with m3u8 file,you can upload it to any of the file storages because it is in small file size.(I suggest ```catbox.moe``` here)  
 
 ------------
 **MIT License.**  
