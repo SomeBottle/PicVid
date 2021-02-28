@@ -6,6 +6,7 @@ A simple PHP Script to transform Video into pics that can be uploaded to picbeds
 
 ## Thanks to
 * [用图床看视频是什么体验](https://i-meto.com/hlsjs-upimg-wrapper/) by metowolf   
+* [用图床传视频](https://akarin.dev/2020/02/07/alicdn-video-hosting/) by akarin.dev  
 
 ## Requirements  
 * Allow PHP function: **shell_exec**  
