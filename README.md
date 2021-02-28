@@ -119,5 +119,9 @@ Just put aside ```video.m3u8.png``` and take a look at ```video.real.m3u8```, yo
 ```
 In this way,your video is available in almost all of the main stream web browser.When it comes to deal with m3u8 file,you can upload it to any of the file storages because it is in small file size.(I suggest ```catbox.moe``` here)  
 
+## Special thanks  
+* **Shota** for feedbacking the problem in Safari.  
+* **Ohmyga** and **Yueer** for helping test the new ways.  
+
 ------------
 **MIT License.**  
