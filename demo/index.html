@@ -19,7 +19,7 @@
   var config = {
 	  debug:true
   };
-  (function (Hls, offset) {
+  /*(function (Hls, offset) {
     var load = Hls.DefaultConfig.loader.prototype.load;
     Hls.DefaultConfig.loader.prototype.load = function (context, config, callbacks) {
         if (context.type === 'manifest' || context.type === 'level' || context.responseType === 'arraybuffer') {
@@ -31,12 +31,13 @@
         }
         return load.call(this, context, config, callbacks);
     }
-  })(Hls, 69);
+  })(Hls, 69);*/
  if (Hls.isSupported()) {
     var hls = new Hls(config);
     hls.loadSource(videoSrc);
     hls.attachMedia(video);
   }else{
-	  alert('Not supported on Safari of iOS now\niOS的Safari还不支持MSE媒体源扩展');
+    video.src = videoSrc;
+    alert('你的浏览器自带支持m3u8，如果无法播放请发issue\nYour browser natively support m3u8 playing, create issue if it doesn\'t work.');  
   }
 </script>
