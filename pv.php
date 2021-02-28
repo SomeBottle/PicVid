@@ -250,6 +250,10 @@ foreach ($parsedm3u8['meta'] as $metav) { /*先把meta写进m3u8*/
         $exploded = explode(':', $metav);
         $exploded[1] = $maxDuration;
         $metav = join(':', $exploded);
+    } else if (stripos($metav, '#EXT-X-VERSION') !== false) { /*单独处理#EXT-X-VERSION为>4*/
+        $exploded = explode(':', $metav);
+        $exploded[1] = 7; /*version4开始支持新的字段#EXT-X-BYTERANGE: length[@offset]*/
+        $metav = join(':', $exploded);
     }
     $m3u8contents.= $metav . PHP_EOL;
 }
@@ -286,6 +290,7 @@ foreach ($parsedm3u8Again['info'] as $fileinfo) { /*写入更新后的资源列�
 }
 $m3u8contents.= '#EXT-X-ENDLIST' . PHP_EOL; /*写入m3u8文件尾*/
 file_put_contents(outp('video.m3u8.' . $disguiseSuffix), $disguiseStream . $m3u8contents); /*写入m3u8图片伪装文件*/
+file_put_contents(outp('video.real.m3u8'), $m3u8contents); /*导出真正的m3u8*/
 unlink(outp('video.m3u8')); /*删掉原来的m3u8*/
 echo 'Everything\'s fine now~The size of disguise pic is:' . PHP_EOL;
 echo "\e[38;5;255;48;5;1;1;4;9;5m" . filesize($disguisePic) . " B\e[0m" . PHP_EOL;
