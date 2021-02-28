@@ -113,7 +113,7 @@ if ($compressOVideo) {
     echo 'start compressing original video.' . PHP_EOL;
     $videosuffix = getSuffix($video);
     $tempvideo = str_ireplace('.' . $videosuffix, '.comp.' . $videosuffix, $video);
-    execCommand('ffmpeg -i ' . p($video) . ' -vcodec libx264 -keyint_min 1 -x264-params keyint=' . ($fps * 5) . ':scenecut=0 -acodec copy ' . p($tempvideo), true); /*改变帧间距压制整个视频*/
+    execCommand('ffmpeg -i ' . p($video) . ' -vcodec libx264 -keyint_min 1 -x264-params keyint=' . ($fps * 2) . ':scenecut=0 -acodec copy ' . p($tempvideo), true); /*改变帧间距压制整个视频*/
     if (!file_exists(p($tempvideo))) die('Original video compression failed'); /*压制失败*/
     unlink(p($video)); /*删掉原视频*/
     rename(p($tempvideo), p($video)); /*重命名压制后的视频为原有视频名*/
