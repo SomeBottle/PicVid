@@ -4,6 +4,9 @@ A simple PHP Script to transform Video into pics that can be uploaded to picbeds
 ## Demo  
 * [https://pv.xbottle.top/demo](https://pv.xbottle.top/demo)  
 
+## Thanks to
+* [用图床看视频是什么体验](https://i-meto.com/hlsjs-upimg-wrapper/) by metowolf   
+
 ## Requirements  
 * Allow PHP function: **shell_exec**  
 * Install and correctly configure **ffmpeg**'s environment variables.  
