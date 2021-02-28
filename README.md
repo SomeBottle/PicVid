@@ -67,8 +67,43 @@ Type at the command line: ```php pv.php [-recomp] -v videofile```
 * If space exists in the absolute path where **pv.php** lies , it may return **"Video bitrate get failed"** error.  
 
 ## How to play  
-Use [Hls.js](https://github.com/video-dev/hls.js) , also you can take a look at the demo.  
-* I haven't found a way to parse disguised ts source on Safari of iOS because it doesn't support MediaSourceExtension.  
+* Use [Hls.js](https://github.com/video-dev/hls.js) , also you can take a look at the demo.  
+* After running the script , you will get two files in the output folder: ```video.real.m3u8``` and ```video.m3u8.<suffix of disguise pic>```  
+### On the one hand  
+Assume that your disguise pic's suffix is ```.png```,and you've got ```video.m3u8.png``` in the output folder. With **hls.js** you can write like this:  
+```javascript
+ var video = document.getElementById('video');
+  var videoSrc = 'video.m3u8.png';
+  var config = {
+	  debug:true
+  };
+  (function (Hls, offset) {
+    var load = Hls.DefaultConfig.loader.prototype.load;
+    Hls.DefaultConfig.loader.prototype.load = function (context, config, callbacks) {
+        if (context.type === 'manifest' || context.type === 'level' || context.responseType === 'arraybuffer') {
+            var onSuccess = callbacks.onSuccess;
+            callbacks.onSuccess = function (response, stats, context) {
+                response.data = response.data.slice(offset);
+                return onSuccess.call(this, response, stats, context);
+            };
+        }
+        return load.call(this, context, config, callbacks);
+    }
+  })(Hls, 69);
+ if (Hls.isSupported()) {
+    var hls = new Hls(config);
+    hls.loadSource(videoSrc);
+    hls.attachMedia(video);
+  }else{
+    //not supported
+  }  
+```
+By using a custom loader which helps you ignore the picture in front of the m3u8 file, you can play the video successfully.**However**, due to the nonsupport of Media Source Extension on iOS Safari, you can't even load it in iOS Safari.  
+
+### On the other hand  
+Just put aside ```video.m3u8.png``` and take a look at ```video.real.m3u8```, you just need to delete the hook code of Hls and add codes to make it alternative for natively m3u8 support browser(Such as Safari):  
+
+
 
 ------------
 **MIT License.**  
