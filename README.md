@@ -59,6 +59,7 @@ function PVUpload($path){
 Type at the command line: ```php pv.php [-recomp] -v videofile```  
 
 * I suggest you **delete all of the files in the output folder** before running the script.  
+* Maybe only available for ```x264``` encoded video now.  
 * Video file is in the same directory as **pv.php**  
 * If you use the option ```-recomp``` , it will try to re-encode your video **in order to make it easier to be split.**  
 * If your video file size is small , do not use the option ```-recomp``` , because it may make it bigger.  
