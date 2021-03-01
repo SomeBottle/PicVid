@@ -88,7 +88,6 @@ function compressTS($file) { /*利用ffmpeg压缩ts文件*/
         echo 'TS File is big even after we compressed it.You can choose to reencode the original video.' . PHP_EOL;
         echo "use \e[38;5;1;1mphp pv.php -recomp -v " . $video . "\e[0m to reencode and continue", PHP_EOL;
         echo "\e[38;5;255;48;5;1;1;4;9;5mWARNING:\e[0m If you use the command above to reencode the original video,it will be covered , please make one backup" . PHP_EOL;
-        exit();
     }
 }
 if ($clearLogOnStart) @unlink(p('executeLog.log'));
