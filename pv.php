@@ -76,7 +76,7 @@ function compressTS($file) { /*利用ffmpeg压缩ts文件*/
     $finalcomp = str_ireplace('.ts', '.comp.ts', $file); /*最终合并成的副本的文件名*/
     execCommand('ffmpeg -y -i ' . $file . ' -vcodec copy -an ' . $singlevideo); /*剥离视频*/
     execCommand('ffmpeg -y -i ' . $file . ' -acodec copy -vn ' . $singleaudio); /*剥离音频*/
-    execCommand('ffmpeg -y -i ' . $file . ' -vcodec libx264 -preset fast -crf 18 -profile:v high ' . $compvideo); /*压缩无声视频*/
+    execCommand('ffmpeg -y -i ' . $file . ' -vcodec libx264 -preset 6 -crf 18 -profile:v high ' . $compvideo); /*压缩无声视频*/
     execCommand('ffmpeg -y -i ' . $compvideo . ' -i ' . $singleaudio . ' -c:v copy -c:a aac -strict experimental ' . $finalcomp); /*合并压缩后的视频和音轨*/
     unlink($file); /*删掉原文件*/
     rename($finalcomp, $file); /*把合并后的视频副本重命名为原文件的名字*/
