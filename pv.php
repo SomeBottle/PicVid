@@ -6,6 +6,7 @@ $clearLogOnStart = true;
 $maxTSFileSize = 5242880; /*每个分割出来ts文件的最大大小（超过就会被压）In bytes*/
 $mergeTSUpTo = 2097152; /*合并小TS到大TS的时候，大TS最高多大 In bytes（不要大于maxTSFileSize）*/
 $disguisePic = __DIR__ . '/small.png'; /*伪装用的图片，png和jpg有严格的文件尾，建议使用*/
+$exitBigTSNum = 0.50; /*(×100%)检查的时候如果超过$maxTSFileSize多于占总体ts量的多少就不再继续*/
 /*ConfigEnd*/
 set_time_limit(0);
 date_default_timezone_set("Asia/Shanghai");
@@ -36,12 +37,27 @@ function execCommand($command, $output = false) {
         shell_exec($command);
     }
 }
+function getTSStart($file) { /*获得ts文件ffmpeg Duration信息中的start*/
+    $allDetails = execCommand('ffmpeg -i ' . $file);
+    preg_match("/Duration: (.*?), start: (.*?), bitrate: (\d*) kb\/s/", $allDetails, $match);
+    $start_time = floatval($match[2]);
+    return $start_time;
+}
 function writeInLog($content) {
     file_put_contents(p('executeLog.log'), '[' . date('Y-m-d H:i:s', time()) . ']' . $content . PHP_EOL, FILE_APPEND);
 }
 function getSuffix($filename) {
     $exploded = explode('.', $filename);
     return end($exploded);
+}
+function cleanOutput() { /*清空output目录*/
+    global $output_dir;
+    $scanOutput = scandir(p($output_dir));
+    foreach ($scanOutput as $v) {
+        if (getSuffix($v) == 'ts') {
+            unlink(outp($v));
+        }
+    }
 }
 function tsSizeCheck() {
     global $output_dir, $maxTSFileSize;
@@ -68,26 +84,40 @@ function getAllTS() { /*返回ts文件和对应的大小*/
     }
     return $tsfiles;
 }
-function compressTS($file) { /*利用ffmpeg压缩ts文件*/
-    global $maxTSFileSize, $video;
-    $singlevideo = str_ireplace('.ts', '.nosound.ts', $file); /*剥离出来的无声视频的文件名*/
-    $singleaudio = str_ireplace('.ts', '.m4a', $file); /*剥离出来的无声音频的文件名*/
-    $compvideo = str_ireplace('.ts', '.comp.nosound.ts', $file); /*无声视频压缩后的视频文件名*/
-    $finalcomp = str_ireplace('.ts', '.comp.ts', $file); /*最终合并成的副本的文件名*/
-    execCommand('ffmpeg -y -i ' . $file . ' -vcodec copy -an ' . $singlevideo); /*剥离视频*/
-    execCommand('ffmpeg -y -i ' . $file . ' -acodec copy -vn ' . $singleaudio); /*剥离音频*/
-    execCommand('ffmpeg -y -i ' . $file . ' -vcodec libx264 -preset 6 -crf 18 -profile:v high ' . $compvideo); /*压缩无声视频*/
-    execCommand('ffmpeg -y -i ' . $compvideo . ' -i ' . $singleaudio . ' -c:v copy -c:a aac -strict experimental ' . $finalcomp); /*合并压缩后的视频和音轨*/
-    unlink($file); /*删掉原文件*/
-    rename($finalcomp, $file); /*把合并后的视频副本重命名为原文件的名字*/
-    unlink($compvideo);
-    unlink($singleaudio);
-    unlink($singlevideo); /*删掉多余的文件*/
-    $newSize = filesize($file); /*查询压缩后的文件大小*/
-    if ($newSize >= $maxTSFileSize) { /*压缩后还是很大*/
-        echo 'TS File is big even after we compressed it.You can choose to reencode the original video.' . PHP_EOL;
-        echo "use \e[38;5;1;1mphp pv.php -recomp -v " . $video . "\e[0m to reencode and continue", PHP_EOL;
-        echo "\e[38;5;255;48;5;1;1;4;9;5mWARNING:\e[0m If you use the command above to reencode the original video,it will be covered , please make one backup" . PHP_EOL;
+function compressTS($file, $crf = 18) { /*利用ffmpeg压缩ts文件，设置开始的crf码率控制参数为18(最高为26)*/
+    global $maxTSFileSize, $video, $defaultStartTime;
+    //$singlevideo = str_ireplace('.ts', '.nosound.ts', $file); /*剥离出来的无声视频的文件名*/
+    //$singleaudio = str_ireplace('.ts', '.m4a', $file); /*剥离出来的无声音频的文件名*/
+    //$compvideo = str_ireplace('.ts', '.comp.nosound.ts', $file); /*无声视频压缩后的视频文件名*/
+    $finalcomp = str_ireplace('.ts', '.comp.final.ts', $file); /*最终合并成的副本的文件名*/
+    $startchangecomp = str_ireplace('.ts', '.comp.ts', $file); /*最终改变starttime后合并成的副本的文件名*/
+    //execCommand('ffmpeg -y -i ' . $file . ' -vcodec copy -an ' . $singlevideo); /*剥离视频*/
+    //execCommand('ffmpeg -y -i ' . $file . ' -acodec copy -vn ' . $singleaudio); /*剥离音频*/
+    //execCommand('ffmpeg -y -i ' . $file . ' -vcodec libx264 -crf '.$crf.' -profile:v high ' . $compvideo); /*压缩无声视频*/
+    execCommand('ffmpeg -y -i ' . $file . ' -c:v libx264 -preset slow -crf ' . $crf . ' -c:a copy ' . $finalcomp); /*合并压缩后的视频和音轨*/
+    $newSize = filesize($finalcomp); /*查询压缩后的文件大小*/
+    if ($newSize >= $maxTSFileSize && $crf < 26) { /*压缩后还是很大，改变crf再压*/
+        $crf+= 1;
+        //unlink($compvideo);
+        //unlink($singleaudio);
+        //unlink($singlevideo); /*删掉这次压制的文件*/
+        unlink($finalcomp);
+        echo 'Retrying for compressing,crf:' . $crf . PHP_EOL;
+        return compressTS($file, $crf); /*返工重压*/
+    } else if ($newSize < $maxTSFileSize) { /*压制成功*/
+        $start_time = getTSStart($file); /*获得TS的开始时间，经过测试发现压制后start值会出现问题，噢，见鬼*/
+        execCommand('ffmpeg -i ' . $finalcomp . ' -muxdelay 0 -c:v copy -c:a copy -muxpreload 0 -output_ts_offset ' . ($start_time) . ' ' . $startchangecomp);
+        unlink($file); /*删掉原文件*/
+        unlink($finalcomp);
+        rename($startchangecomp, $file); /*把合并后的视频副本重命名为原文件的名字*/
+        //unlink($compvideo);
+        //unlink($singleaudio);
+        //unlink($singlevideo); /*删掉多余的文件*/
+        
+    } else { /*试了改crf也没用，压制TS失败*/
+        echo 'TS File is big even after we compressed it.You can choose to re-encode the original video.' . PHP_EOL;
+        echo "use \e[38;5;1;1mphp pv.php -recomp -v " . $video . "\e[0m to re-encode and continue", PHP_EOL;
+        echo "\e[38;5;255;48;5;1;1;4;9;5mWARNING:\e[0m If you use the command above to re-encode the original video,it will be covered , please make one backup" . PHP_EOL;
     }
 }
 if ($clearLogOnStart) @unlink(p('executeLog.log'));
@@ -108,11 +138,11 @@ $fps = intval($match2[5]);
 $bitrate = intval($match[3]); /*获取视频比特率*/
 if ($bitrate <= 0 || $fps <= 0) die('Video bitrate get failed.');
 /*compress original video*/
-if ($compressOVideo) {/*https://superuser.com/questions/908280/what-is-the-correct-way-to-fix-keyframes-in-ffmpeg-for-dash*/
+if ($compressOVideo) { /*https://superuser.com/questions/908280/what-is-the-correct-way-to-fix-keyframes-in-ffmpeg-for-dash*/
     echo 'start compressing original video.' . PHP_EOL;
     $videosuffix = getSuffix($video);
     $tempvideo = str_ireplace('.' . $videosuffix, '.comp.' . $videosuffix, $video);
-    execCommand('ffmpeg -i ' . p($video) . ' -vcodec libx264 -keyint_min 1 -x264-params keyint=' . ($fps * 2) . ':scenecut=-1 -acodec copy ' . p($tempvideo), true); /*改变帧间距压制整个视频*/
+    execCommand('ffmpeg -i ' . p($video) . ' -vcodec libx264 -keyint_min 1 -x264-params keyint=' . (($fps * 2) - 10) . ':scenecut=-1 -acodec copy ' . p($tempvideo), true); /*改变帧间距压制整个视频*/
     if (!file_exists(p($tempvideo))) die('Original video compression failed'); /*压制失败*/
     unlink(p($video)); /*删掉原视频*/
     rename(p($tempvideo), p($video)); /*重命名压制后的视频为原有视频名*/
@@ -129,15 +159,32 @@ execCommand($tsSplit);
 unlink(outp('video.ts')); /*delete original ts file*/
 $scanOutput = scandir(p($output_dir));
 if (!in_array('0.ts', $scanOutput)) die('TS File split failed');
+/*get 0.ts starttime*/
+/*https://stackoverflow.com/questions/43660160/ffmpeg-set-timecode-offset-in-output*/
+/*FFmpeg大概会添加1.4s到starttime里，我们可以直接从0.ts的详细信息里获得这个starttime*/
+$defaultStartTime = getTSStart(outp('0.ts'));
+echo 'Default TS StartTime:' . $defaultStartTime . PHP_EOL;
 /*process ts files*/
 echo 'Checking TS Files' . PHP_EOL;
+$totalScanTSNum = count($scanOutput) - 2; /*计算扫描出来的TS文件数量并-2(scandir扫描结果会输出.和..)*/
 $bigfiles = tsSizeCheck(); /*检查ts大小并返回包含不合格大小ts的数组*/
+$bigfilesNum = count($bigfiles); /*检查大ts的数量*/
+if (round(($bigfilesNum / $totalScanTSNum), 2) > $exitBigTSNum) { /*如果有大量体积大的ts数量，直接提醒用户重压原视频*/
+    echo 'Too many large TS slices.You should re-encode the original video.' . PHP_EOL;
+    echo "use \e[38;5;1;1mphp pv.php -recomp -v " . $video . "\e[0m to re-encode and continue", PHP_EOL;
+    echo "\e[38;5;255;48;5;1;1;4;9;5mWARNING:\e[0m If you use the command above to re-encode the original video,it will be covered , please make one backup" . PHP_EOL;
+    cleanOutput();
+    exit();
+}
 foreach ($bigfiles as $val) {
     echo 'Compressing TS: ' . $val . PHP_EOL;
     compressTS(outp($val));
 }
 $bigfiles = tsSizeCheck(); /*二次检查*/
-if (count($bigfiles) > 0) die('TS compression failed , too big.'); /*TS压了一遍还是大，只能放弃了*/
+if (count($bigfiles) > 0) {
+    cleanOutput();
+    die('TS compression failed , too big.'); /*TS压了一遍还是大，只能放弃了*/
+}
 /*parse m3u8*/
 echo 'Parsing m3u8 file' . PHP_EOL;
 function m3u8parser($filepath) {
