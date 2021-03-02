@@ -21,6 +21,7 @@ $clearLogOnStart = true;  /*clear executeLog.log when running the script*/
 $maxTSFileSize = 5242880; /*(In bytes) Maximum size of each split out ts file (more than that will be compressed) */  
 $mergeTSUpTo = 2097152; /*(In bytes,cannot be set over $maxTSFileSize) The max ts file size generated when merging several small ts files*/  
 $disguisePic = __DIR__ . '/small.png'; /*The picture used for disguising, we suggest using a jpg or png file*/  
+$exitBigTSNum = 0.50; /*(×100%)When large(>$maxTSFileSize) ts files' total num account for more than $exitBigTSNum, the script will exit and recommend you to use -recomp*/
 ```
 
 Edit **uploadAPI.php**:  
@@ -61,7 +62,8 @@ Type at the command line: ```php pv.php [-recomp] -v videofile```
 * I suggest you **delete all of the files in the output folder** before running the script.  
 * Maybe only available for ```x264``` encoded video now.  
 * Video file is in the same directory as **pv.php**  
-* If you use the option ```-recomp``` , it will try to re-encode your video **in order to make it easier to be split.**  
+* The script will automatically compress large TS Files through FFmpeg's ```crf``` option.  
+* If you use the option ```-recomp``` , it will try to re-encode your original video **in order to make it easier to be split.**  
 * If your video file size is small , do not use the option ```-recomp``` , because it may make it bigger.  
 * If you used ```-recomp``` and still get a **TS compression failure** ，please compress the video file by yourself, or change the config item ```$maxTSFileSize```.    
 
