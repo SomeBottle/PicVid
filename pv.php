@@ -12,7 +12,7 @@ set_time_limit(0);
 date_default_timezone_set("Asia/Shanghai");
 $params_arr = getopt('v:');
 $compressOVideo = false; /*是否压缩原视频*/
-if (in_array('-recomp', $argv)) $compressOVideo = true; /*有-compress参数就压缩原视频*/
+if (in_array('-recomp', $argv)) $compressOVideo = true; /*有-recomp参数就压缩原视频*/
 $video = @$params_arr['v'];
 if (empty($video)) die('Please Input Video file');
 /*Initialization*/
