@@ -22,6 +22,7 @@ $maxTSFileSize = 5242880; /*(In bytes) Maximum size of each split out ts file (m
 $mergeTSUpTo = 2097152; /*(In bytes,cannot be set over $maxTSFileSize) The max ts file size generated when merging several small ts files*/  
 $disguisePic = __DIR__ . '/small.png'; /*The picture used for disguising, we suggest using a jpg or png file*/  
 $exitBigTSNum = 0.50; /*(×100%)When large(>$maxTSFileSize) ts files' total num account for more than $exitBigTSNum, the script will exit and recommend you to use -recomp*/
+$useByteRange = true; /*Will you use the BYTERANGE option in the generated m3u8 file, you can also use '--nobr' to disable it in the command line*/
 ```
 
 Edit **uploadAPI.php**:  
@@ -57,14 +58,15 @@ function PVUpload($path){
 ```
 
 ## Usage  
-Type at the command line: ```php pv.php [-recomp] -v videofile```  
+Type at the command line: ```php pv.php [--nobr] [--recomp] -v videofile```  
 
 * I suggest you **delete all of the files in the output folder** before running the script.  
 * Maybe only available for ```x264``` encoded video now.  
 * Video file is in the same directory as **pv.php**  
 * The script will automatically compress large TS Files through FFmpeg's ```crf``` option.  
-* If you use the option ```-recomp``` , it will try to re-encode your original video **in order to make it easier to be split.**  
-* If you used ```-recomp``` and still get a **TS compression failure** ，please compress the video file by yourself, or change the config item ```$maxTSFileSize```.    
+* If you use the option ```--nobr``` , it won't use EXT-X-BYTERANGE option in the generated m3u8 file.  
+* If you use the option ```--recomp``` , it will try to re-encode your original video **in order to make it easier to be split.**  
+* If you used ```--recomp``` and still get a **TS compression failure** ，please compress the video file by yourself, or change the config item ```$maxTSFileSize```.    
 
 ## Notice  
 * If space exists in the absolute path where **pv.php** lies , it may return **"Video bitrate get failed"** error.  
@@ -72,7 +74,7 @@ Type at the command line: ```php pv.php [-recomp] -v videofile```
 ## How to play  
 * Use [Hls.js](https://github.com/video-dev/hls.js) , also you can take a look at the demo.  
 * After running the script , you will get two files in the output folder: ```video.real.m3u8``` and ```video.m3u8.<suffix of disguise pic>```  
-### On the one hand  
+### On the one hand(Not suggested)  
 Assume that your disguise pic's suffix is ```.png```,and you've got ```video.m3u8.png``` in the output folder. With **hls.js** you can write like this:  
 ```javascript
  var video = document.getElementById('video');
@@ -121,6 +123,11 @@ Just put aside ```video.m3u8.png``` and take a look at ```video.real.m3u8```, yo
   }  
 ```
 In this way,your video is available in almost all of the main stream web browser.When it comes to deal with m3u8 file,you can upload it to any of the file storages because it is in small file size.(I suggest ```catbox.moe``` here)  
+
+### Additional notice  
+
+* Due to the [security policy](https://github.com/google/shaka-player/issues/2227) of the web browser , you won't able to play **disguised videos with ```EXT-X-BYTERANGE``` options in the generated m3u8 file** if the picbed has a restriction on CORS policy.  
+* With ```EXT-X-BYTERANGE``` option , you can use whatever picture you like as disguise.  
 
 ## Special thanks  
 * **Shota** for feedbacking the problem in Safari.  
