@@ -5,14 +5,16 @@ $if_windows = true;
 $clearLogOnStart = true;
 $maxTSFileSize = 5242880; /*每个分割出来ts文件的最大大小（超过就会被压）In bytes*/
 $mergeTSUpTo = 2097152; /*合并小TS到大TS的时候，大TS最高多大 In bytes（不要大于maxTSFileSize）*/
-$disguisePic = __DIR__ . '/small.png'; /*伪装用的图片，png和jpg有严格的文件尾，建议使用*/
+$disguisePic = __DIR__ . '/potato.jpg'; /*伪装用的图片，png和jpg有严格的文件尾，建议使用*/
 $exitBigTSNum = 0.50; /*(×100%)检查的时候如果超过$maxTSFileSize多于占总体ts量的多少就不再继续*/
+$useByteRange = true; /*是否在m3u8文件内使用byterange选项，你也可以在命令行使用--nobr禁用byterange*/
 /*ConfigEnd*/
 set_time_limit(0);
 date_default_timezone_set("Asia/Shanghai");
 $params_arr = getopt('v:');
 $compressOVideo = false; /*是否压缩原视频*/
-if (in_array('-recomp', $argv)) $compressOVideo = true; /*有-recomp参数就压缩原视频*/
+if (in_array('--recomp', $argv)) $compressOVideo = true; /*有--recomp就压缩原视频*/
+if (in_array('--nobr', $argv)) $useByteRange = false; /*有--nobr就禁用byterange选项*/
 $video = @$params_arr['v'];
 if (empty($video)) die('Please Input Video file');
 /*Initialization*/
@@ -310,6 +312,7 @@ file_put_contents(outp('video.m3u8'), $m3u8contents);
 echo 'Uploading files' . PHP_EOL;
 $parsedm3u8Again = m3u8parser(outp('video.m3u8')); /*再次解析m3u8*/
 $disguiseStream = file_get_contents($disguisePic);
+$disguiseSize = filesize($disguisePic);
 $disguiseSuffix = getSuffix($disguisePic); /*伪装图片的后缀*/
 require_once p('uploadAPI.php'); /*引入图片上传模块*/
 foreach ($parsedm3u8Again['info'] as $key => $val) {
@@ -330,8 +333,9 @@ $m3u8contents = '#EXTM3U' . PHP_EOL; /*初始化m3u8文件头（别忘了还原�
 foreach ($parsedm3u8Again['meta'] as $eachmeta) { /*写入m3u8元数据*/
     $m3u8contents.= $eachmeta . PHP_EOL;
 }
-foreach ($parsedm3u8Again['info'] as $fileinfo) { /*写入更新后的资源列表*/
+foreach ($parsedm3u8Again['info'] as $outputfile => $fileinfo) { /*写入更新后的资源列表*/
     $m3u8contents.= '#EXTINF:' . $fileinfo['duration'] . ',' . PHP_EOL; /*写入ts持续的duration*/
+    $m3u8contents.= ($useByteRange ? '#EXT-X-BYTERANGE:' . filesize(outp($outputfile)) . '@' . $disguiseSize : '') . PHP_EOL;
     $m3u8contents.= $fileinfo['file'] . PHP_EOL; /*写入伪装的url*/
 }
 $m3u8contents.= '#EXT-X-ENDLIST' . PHP_EOL; /*写入m3u8文件尾*/
