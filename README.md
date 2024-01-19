@@ -1,5 +1,5 @@
 # PicVid
-A simple PHP Script to transform Video into pics that can be uploaded to picbeds.   
+A simple PHP script that hides video data within image files.   
 
 ## Demo  
 * [https://somebottle.gitee.io/bottlecos/picvid_demo/oyashirosama.html](https://somebottle.gitee.io/bottlecos/picvid_demo/oyashirosama.html)  
