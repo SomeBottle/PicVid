@@ -121,7 +121,7 @@ temppic941-0.jpg
 ```
 
 ## Usage  
-Type at the command line: ```php pv.php [--nobr] [--recomp] -v videofile```  
+Type at the command line: ```php <pv.php|pv_bypass_upload.php> [--nobr] [--recomp] -v videofile```  
 
 * I suggest you **delete all of the files in the output folder** before running the script.  
 * Maybe only available for ```x264``` encoded video now.  
