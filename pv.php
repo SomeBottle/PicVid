@@ -18,18 +18,22 @@ if (in_array('--nobr', $argv)) $useByteRange = false; /*有--nobr就禁用bytera
 $video = @$params_arr['v'];
 if (empty($video)) die('Please Input Video file');
 /*Initialization*/
-function is_cli() {
+function is_cli()
+{
     return preg_match("/cli/i", php_sapi_name()) ? true : false;
 }
-function p($p) {
+function p($p)
+{
     global $if_windows;
     return __DIR__ . ($if_windows ? '\\' : '/') . $p;
 }
-function outp($path) {
+function outp($path)
+{
     global $output_dir, $if_windows;
     return p($output_dir . ($if_windows ? '\\' : '/') . $path);
 }
-function execCommand($command, $output = false) {
+function execCommand($command, $output = false)
+{
     if (!$output) {
         $trace = shell_exec($command . ' 2>&1');
         /*https://stackoverflow.com/questions/1110655/capture-ffmpeg-output/1110765*/
@@ -39,20 +43,24 @@ function execCommand($command, $output = false) {
         shell_exec($command);
     }
 }
-function getTSStart($file) { /*获得ts文件ffmpeg Duration信息中的start*/
+function getTSStart($file)
+{ /*获得ts文件ffmpeg Duration信息中的start*/
     $allDetails = execCommand('ffmpeg -i ' . $file);
     preg_match("/Duration: (.*?), start: (.*?), bitrate: (\d*) kb\/s/", $allDetails, $match);
     $start_time = floatval($match[2]);
     return $start_time;
 }
-function writeInLog($content) {
+function writeInLog($content)
+{
     file_put_contents(p('executeLog.log'), '[' . date('Y-m-d H:i:s', time()) . ']' . $content . PHP_EOL, FILE_APPEND);
 }
-function getSuffix($filename) {
+function getSuffix($filename)
+{
     $exploded = explode('.', $filename);
     return end($exploded);
 }
-function cleanOutput() { /*清空output目录*/
+function cleanOutput()
+{ /*清空output目录*/
     global $output_dir;
     $scanOutput = scandir(p($output_dir));
     foreach ($scanOutput as $v) {
@@ -61,7 +69,8 @@ function cleanOutput() { /*清空output目录*/
         }
     }
 }
-function tsSizeCheck() {
+function tsSizeCheck()
+{
     global $output_dir, $maxTSFileSize;
     $scanOutput = scandir(p($output_dir));
     $bigfiles = [];
@@ -73,7 +82,8 @@ function tsSizeCheck() {
     }
     return $bigfiles;
 }
-function getAllTS() { /*返回ts文件和对应的大小*/
+function getAllTS()
+{ /*返回ts文件和对应的大小*/
     global $output_dir;
     $scanOutput = scandir(p($output_dir));
     $tsfiles = [];
@@ -86,7 +96,8 @@ function getAllTS() { /*返回ts文件和对应的大小*/
     }
     return $tsfiles;
 }
-function compressTS($file, $crf = 18) { /*利用ffmpeg压缩ts文件，设置开始的crf码率控制参数为18(最高为26)*/
+function compressTS($file, $crf = 18)
+{ /*利用ffmpeg压缩ts文件，设置开始的crf码率控制参数为18(最高为26)*/
     global $maxTSFileSize, $video, $defaultStartTime;
     //$singlevideo = str_ireplace('.ts', '.nosound.ts', $file); /*剥离出来的无声视频的文件名*/
     //$singleaudio = str_ireplace('.ts', '.m4a', $file); /*剥离出来的无声音频的文件名*/
@@ -99,7 +110,7 @@ function compressTS($file, $crf = 18) { /*利用ffmpeg压缩ts文件，设置开
     execCommand('ffmpeg -y -i ' . $file . ' -c:v libx264 -preset slow -crf ' . $crf . ' -c:a copy ' . $finalcomp); /*合并压缩后的视频和音轨*/
     $newSize = filesize($finalcomp); /*查询压缩后的文件大小*/
     if ($newSize >= $maxTSFileSize && $crf < 26) { /*压缩后还是很大，改变crf再压*/
-        $crf+= 1;
+        $crf += 1;
         //unlink($compvideo);
         //unlink($singleaudio);
         //unlink($singlevideo); /*删掉这次压制的文件*/
@@ -115,7 +126,7 @@ function compressTS($file, $crf = 18) { /*利用ffmpeg压缩ts文件，设置开
         //unlink($compvideo);
         //unlink($singleaudio);
         //unlink($singlevideo); /*删掉多余的文件*/
-        
+
     } else { /*试了改crf也没用，压制TS失败*/
         echo 'TS File is big even after we compressed it.You can choose to re-encode the original video.' . PHP_EOL;
         echo "use \e[38;5;1;1mphp pv.php -recomp -v " . $video . "\e[0m to re-encode and continue", PHP_EOL;
@@ -189,7 +200,8 @@ if (count($bigfiles) > 0) {
 }
 /*parse m3u8*/
 echo 'Parsing m3u8 file' . PHP_EOL;
-function m3u8parser($filepath) {
+function m3u8parser($filepath)
+{
     $m3u8resource = file($filepath); /*将m3u8文件每行写入数组*/
     $readline = 0; /*从数组第一位开始读（从文件的第一行开始读）*/
     $endline = count($m3u8resource) - 1; /*最后一行对应的数组键值*/
@@ -197,19 +209,19 @@ function m3u8parser($filepath) {
     while ($readline <= $endline) {
         $m3u8resource[$readline] = preg_replace("/\s/", "", $m3u8resource[$readline]); /*PHP file()读出来的带换行符，要处理*/
         if ($m3u8resource[$readline] == '#EXTM3U' || $m3u8resource[$readline] == '#EXT-X-ENDLIST') { /*如果读到m3u8文件头或者文件尾就跳出当前循环进入下个循环*/
-            $readline+= 1; /*向下读一行*/
+            $readline += 1; /*向下读一行*/
             continue;
         }
         if (stripos($m3u8resource[$readline], '#EXTINF:') === 0) { /*往下读到以#EXTINF开头的每行，这里有个PHP非常常见的坑，字串符用双等==与0作比较时会被转换成0来比较，导致'aa'==0判断为真的情况出现*/
             $rmhead = str_ireplace('#EXTINF:', '', $m3u8resource[$readline]); /*去掉这一行的#EXTINF:*/
             $duration = floatval(str_ireplace(',', '', $rmhead)); /*去掉这一行末尾的逗号，并转化为浮点数，获得这一段ts对应的时间长度duration*/
-            $readline+= 1; /*向下读一行*/
+            $readline += 1; /*向下读一行*/
             $tsfile = preg_replace("/\s/", "", $m3u8resource[$readline]); /*#EXTINF:开头一行的下一行一定是一个ts文件地址，注意有换行符!*/
             $parsedm3u8['info'][$tsfile] = ['duration' => $duration, 'file' => $tsfile];
         } else {
             $parsedm3u8['meta'][] = $m3u8resource[$readline]; /*其他行丢到meta元数据里去*/
         }
-        $readline+= 1; /*向下读一行*/
+        $readline += 1; /*向下读一行*/
     }
     return $parsedm3u8;
 }
@@ -227,9 +239,9 @@ foreach ($tsfiles as $val) { /*Step1-找出所有大小超过$mergeTSUpTo的大�
     $thesize = $val['size'];
     $theduration = $parsedm3u8['info'][$thefile]['duration'];
     if ($thesize >= $mergeTSUpTo) {
-        $category1Index+= 1;
+        $category1Index += 1;
         $category1[$category1Index] = [[$thefile, $thesize, $theduration]]; /*大文件单独占一个数组值*/
-        $category1Index+= 1; /*下一个又是新的小文件数组*/
+        $category1Index += 1; /*下一个又是新的小文件数组*/
     } else {
         $category1[$category1Index][] = [$thefile, $thesize, $theduration]; /*小文件塞一个数组里*/
     }
@@ -242,7 +254,7 @@ foreach ($category1 as $tsval) { /*Step2-合并小的文件形成新的数组*/
         $thesize = $tsval[0][1];
         $theduration = $tsval[0][2];
         $category2[$category2Index] = [[outp($thefile), $theduration]];
-        $category2Index+= 1;
+        $category2Index += 1;
     } else {
         $sizeToAdd = 0; /*用于统计小文件合并后的大小*/
         foreach ($tsval as $ts) { /*遍历小文件*/
@@ -252,14 +264,14 @@ foreach ($category1 as $tsval) { /*Step2-合并小的文件形成新的数组*/
             $testSize = $sizeToAdd + $thesize; /*试试累加大小*/
             if ($testSize >= $mergeTSUpTo) { /*超过设定的大小了，合成一个文件*/
                 $sizeToAdd = $thesize; /*记录落单的小文件大小*/
-                $category2Index+= 1;
+                $category2Index += 1;
                 $category2[$category2Index][] = [outp($thefile), $theduration]; /*记录落单的小文件*/
             } else {
-                $sizeToAdd+= $thesize;
+                $sizeToAdd += $thesize;
                 $category2[$category2Index][] = [outp($thefile), $theduration]; /*可以合并的小文件加在一个数组里*/
             }
         }
-        $category2Index+= 1; /*这里+1是为了防止进入下一个循环的时候如果是大文件就会覆盖掉上面循环最后两个小文件*/
+        $category2Index += 1; /*这里+1是为了防止进入下一个循环的时候如果是大文件就会覆盖掉上面循环最后两个小文件*/
     }
 };
 /*start merging progress*/
@@ -269,7 +281,7 @@ foreach ($category2 as $fileindex => $tsarr) {
     $concatVal = '';
     $finalstream = '';
     foreach ($tsarr as $ts) {
-        $finalstream.= file_get_contents($ts[0]);
+        $finalstream .= file_get_contents($ts[0]);
     }
     file_put_contents(outp('temp.ts'), $finalstream);
     /*这里直接改成二进制拼接文件了，而且比ffmpeg concat协议要快特别多，也没有时间戳问题*/
@@ -287,10 +299,10 @@ $m3u8list = ''; /*m3u8播放源*/
 $maxDuration = 0; /*记录最大的duration以更改m3u8元数据里的#EXT-X-TARGETDURATION*/
 foreach ($category2 as $fileindex => $tsarr) {
     $totalDuration = 0; /*每个合并后的大ts文件的duration*/
-    foreach ($tsarr as $ts) $totalDuration+= $ts[1];
+    foreach ($tsarr as $ts) $totalDuration += $ts[1];
     if ($totalDuration > $maxDuration) $maxDuration = $totalDuration; /*通过不断比较得出最大的duration*/
-    $m3u8list.= '#EXTINF:' . $totalDuration . ',' . PHP_EOL; /*写入大ts持续的duration*/
-    $m3u8list.= $fileindex . '.ts' . PHP_EOL; /*写入大ts文件名*/
+    $m3u8list .= '#EXTINF:' . $totalDuration . ',' . PHP_EOL; /*写入大ts持续的duration*/
+    $m3u8list .= $fileindex . '.ts' . PHP_EOL; /*写入大ts文件名*/
 }
 $maxDuration = ceil($maxDuration); /*向上取整*/
 foreach ($parsedm3u8['meta'] as $metav) { /*先把meta写进m3u8*/
@@ -303,10 +315,10 @@ foreach ($parsedm3u8['meta'] as $metav) { /*先把meta写进m3u8*/
         $exploded[1] = 7; /*version4开始支持新的字段#EXT-X-BYTERANGE: length[@offset]*/
         $metav = join(':', $exploded);
     }
-    $m3u8contents.= $metav . PHP_EOL;
+    $m3u8contents .= $metav . PHP_EOL;
 }
-$m3u8contents.= $m3u8list; /*写入m3u8播放源*/
-$m3u8contents.= '#EXT-X-ENDLIST' . PHP_EOL; /*写入m3u8文件尾*/
+$m3u8contents .= $m3u8list; /*写入m3u8播放源*/
+$m3u8contents .= '#EXT-X-ENDLIST' . PHP_EOL; /*写入m3u8文件尾*/
 file_put_contents(outp('video.m3u8'), $m3u8contents);
 /*upload files*/
 echo 'Uploading files' . PHP_EOL;
@@ -331,18 +343,17 @@ foreach ($parsedm3u8Again['info'] as $key => $val) {
 echo 'Rewriting m3u8' . PHP_EOL;
 $m3u8contents = '#EXTM3U' . PHP_EOL; /*初始化m3u8文件头（别忘了还原换行符）*/
 foreach ($parsedm3u8Again['meta'] as $eachmeta) { /*写入m3u8元数据*/
-    $m3u8contents.= $eachmeta . PHP_EOL;
+    $m3u8contents .= $eachmeta . PHP_EOL;
 }
 foreach ($parsedm3u8Again['info'] as $outputfile => $fileinfo) { /*写入更新后的资源列表*/
-    $m3u8contents.= '#EXTINF:' . $fileinfo['duration'] . ',' . PHP_EOL; /*写入ts持续的duration*/
-    $m3u8contents.= ($useByteRange ? '#EXT-X-BYTERANGE:' . filesize(outp($outputfile)) . '@' . $disguiseSize : '') . PHP_EOL;
-    $m3u8contents.= $fileinfo['file'] . PHP_EOL; /*写入伪装的url*/
+    $m3u8contents .= '#EXTINF:' . $fileinfo['duration'] . ',' . PHP_EOL; /*写入ts持续的duration*/
+    $m3u8contents .= ($useByteRange ? '#EXT-X-BYTERANGE:' . filesize(outp($outputfile)) . '@' . $disguiseSize : '') . PHP_EOL;
+    $m3u8contents .= $fileinfo['file'] . PHP_EOL; /*写入伪装的url*/
 }
-$m3u8contents.= '#EXT-X-ENDLIST' . PHP_EOL; /*写入m3u8文件尾*/
+$m3u8contents .= '#EXT-X-ENDLIST' . PHP_EOL; /*写入m3u8文件尾*/
 file_put_contents(outp('video.m3u8.' . $disguiseSuffix), $disguiseStream . $m3u8contents); /*写入m3u8图片伪装文件*/
 file_put_contents(outp('video.real.m3u8'), $m3u8contents); /*导出真正的m3u8*/
 unlink(outp('video.m3u8')); /*删掉原来的m3u8*/
 echo 'Everything\'s fine now~The size of disguise pic is:' . PHP_EOL;
 echo "\e[38;5;255;48;5;1;1;4;9;5m" . filesize($disguisePic) . " B\e[0m" . PHP_EOL;
 echo 'Upload the disguised m3u8 file and enjoy!' . PHP_EOL;
-?>

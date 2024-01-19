@@ -1,8 +1,10 @@
 # PicVid
-A simple PHP Script to transform Video into pics that can be uploaded to picbeds.
+A simple PHP Script to transform Video into pics that can be uploaded to picbeds.   
 
 ## Demo  
-* [https://pv.xbottle.top/demo](https://pv.xbottle.top/demo)  
+* [https://somebottle.gitee.io/bottlecos/picvid_demo/oyashirosama.html](https://somebottle.gitee.io/bottlecos/picvid_demo/oyashirosama.html)  
+
+AliExpress image hosting has adopted a strategy of converting images to the webp format, so the previous demo based on AliExpress image hosting is no longer functional. The demo has now been migrated to Gitee Pages for learning and reference purposes only. (Video loading may be slightly slow).  
 
 ## Thanks to
 * [用图床看视频是什么体验](https://i-meto.com/hlsjs-upimg-wrapper/) by metowolf   
@@ -57,6 +59,67 @@ function PVUpload($path){
 }   
 ```
 
+## Bypass uploading
+
+By default, `pv.php` will upload the disguised pics to picbeds through `uploadAPI.php`.  
+
+
+If you want to bypass the upload process, and just save these pics to local, you can use `pv_bypass_upload.php` and `saveToLocal.php` instead.  
+
+In this way, your directory structure will be as follows:  
+```shell
+YourDir
+├── executeLog.log # ffmpeg output logs
+├── output # output directory
+│   ├── 0.ts # ts files
+│   ├── 1.ts
+│   ├── pics # disguised pictures you saved
+│   │   ├── temppic1440-0.jpg
+│   │   └── temppic999-1.jpg
+│   ├── video.m3u8.jpg # m3u8 file disguised in jpg
+│   └── video.real.m3u8 # m3u8 file without disguise (recommend)
+├── potato.jpg # disguising picture
+├── pv_bypass_upload.php 
+├── rick.mp4 # original video
+└── saveToLocal.php # required by pv_bypass_upload.php
+```  
+
+You may want to upload those pics to picbeds manually, and the URLs in m3u8 file need to be updated.   
+
+Fortunately, you will be asked to type in the URL of the parent directory of the place you would like to upload the disguised pictures.  
+
+The prompt will look like this:  
+
+```bash
+Example: If you are to upload pic.png to https://example.com/abc/pic.png
+You should type in 'https://example.com/abc/'
+Please input the parent URL of the pics to be uploaded: https://test/
+
+Preview: Pic test.png corresponds to https://test/test.png
+Type in 'yes' to confirm: yes
+OK.
+```  
+
+In the example above, I use `https://test/` as the parent URL, and the generated m3u8 file will look like this:  
+
+```m3u8
+...
+#EXTINF:10.08,
+#EXT-X-BYTERANGE:3408252@3610
+https://test/temppic941-0.jpg
+...
+```
+
+If I leave the input blank, the generated m3u8 file will be as follows:  
+
+```m3u8
+...
+#EXTINF:10.08,
+#EXT-X-BYTERANGE:3408252@3610
+temppic941-0.jpg
+...
+```
+
 ## Usage  
 Type at the command line: ```php pv.php [--nobr] [--recomp] -v videofile```  
 
@@ -106,6 +169,11 @@ Assume that your disguise pic's suffix is ```.png```,and you've got ```video.m3u
 By using a custom loader which helps you ignore the picture in front of the m3u8 file, you can play the video successfully.**However**, due to the nonsupport of Media Source Extension on iOS Safari, you can't even load it in iOS Safari.  
 
 ### On the other hand  
+
+⚠️ Currently not working **without** `EXT-X-BYTERANGE`, you need to set `$useByteRange = true;` in the [config](#config) so as to play in this way.  
+
+-----
+
 Just put aside ```video.m3u8.png``` and take a look at ```video.real.m3u8```, you just need to delete the hook code of Hls and add codes to make it alternative for natively m3u8 support browser(Such as Safari):  
 ```javascript
  var video = document.getElementById('video');
@@ -122,7 +190,7 @@ Just put aside ```video.m3u8.png``` and take a look at ```video.real.m3u8```, yo
     alert('你的浏览器自带支持m3u8，如果无法播放请发issue\nYour browser natively support m3u8 playing, create issue if it doesn\'t work.');  
   }  
 ```
-In this way,your video is available in almost all of the main stream web browser.When it comes to deal with m3u8 file,you can upload it to any of the file storages because it is in small file size.(I suggest ```catbox.moe``` here)  
+In this way,your video is available in almost all of the main stream web browser.When it comes to deal with m3u8 file,you can upload it to any of the file storages because it is in small file size.  
 
 ### Additional notice  
 
