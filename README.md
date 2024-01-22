@@ -2,6 +2,13 @@
 A simple PHP script that hides video data within image files.   
 
 ## Demo  
+
+Using [a hook](#on-the-one-handnot-suggested) based on Hls loader:   
+
+* https://somebottle.gitee.io/bottlecos/picvid_demo/
+
+Using [`EXT-X-BYTERANGE`](#on-the-other-hand) option in m3u8 file:   
+
 * [https://somebottle.gitee.io/bottlecos/picvid_demo/oyashirosama.html](https://somebottle.gitee.io/bottlecos/picvid_demo/oyashirosama.html)  
 
 AliExpress image hosting has adopted a strategy of converting images to the webp format, so the previous demo based on AliExpress image hosting is no longer functional. The demo has now been migrated to Gitee Pages for learning and reference purposes only. (Video loading may be slightly slow).  
@@ -151,13 +158,15 @@ Assume that your disguise pic's suffix is ```.png```,and you've got ```video.m3u
         if (context.type === 'manifest' || context.type === 'level' || context.responseType === 'arraybuffer') {
             var onSuccess = callbacks.onSuccess;
             callbacks.onSuccess = function (response, stats, context) {
+                // .m3u8文件载入时不要给截取了
+                if (response.url.endsWith('.m3u8')) return onSuccess.call(this, response, stats, context);
                 response.data = response.data.slice(offset);
                 return onSuccess.call(this, response, stats, context);
             };
         }
         return load.call(this, context, config, callbacks);
     }
-  })(Hls, 69);
+  })(Hls, 69); // Video bytes start from pos 69
  if (Hls.isSupported()) {
     var hls = new Hls(config);
     hls.loadSource(videoSrc);
@@ -190,12 +199,11 @@ Just put aside ```video.m3u8.png``` and take a look at ```video.real.m3u8```, yo
     alert('你的浏览器自带支持m3u8，如果无法播放请发issue\nYour browser natively support m3u8 playing, create issue if it doesn\'t work.');  
   }  
 ```
-In this way,your video is available in almost all of the main stream web browser.When it comes to deal with m3u8 file,you can upload it to any of the file storages because it is in small file size.  
+In this way, your video is available in almost all of the main stream web browser.  
 
 ### Additional notice  
 
-* Due to the [security policy](https://github.com/google/shaka-player/issues/2227) of the web browser , you won't able to play **disguised videos with ```EXT-X-BYTERANGE``` options in the generated m3u8 file** if the picbed has a restriction on CORS policy.  
-* With ```EXT-X-BYTERANGE``` option , you can use whatever picture you like as disguise.  
+* Due to the [security policy](https://github.com/google/shaka-player/issues/2227) of the web browser , you won't able to play **disguised videos** if the picbed has a restriction on **CORS policy**.  
 
 ## Special thanks  
 * **Shota** for feedbacking the problem in Safari.  
