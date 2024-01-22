@@ -14,7 +14,8 @@ Using [`EXT-X-BYTERANGE`](#on-the-other-hand) option in m3u8 file:
 AliExpress image hosting has adopted a strategy of converting images to the webp format, so the previous demo based on AliExpress image hosting is no longer functional. The demo has now been migrated to Gitee Pages for learning and reference purposes only. (Video loading may be slightly slow).  
 
 ## Thanks to
-* [用图床看视频是什么体验](https://i-meto.com/hlsjs-upimg-wrapper/) by metowolf   
+* [用图床看视频是什么体验](https://i-meto.com/hlsjs-upimg-wrapper/) by metowolf
+  - 镜像: https://web.archive.org/web/20210415051232/https://i-meto.com/hlsjs-upimg-wrapper/
 * [用图床传视频](https://akarin.dev/2020/02/07/alicdn-video-hosting/) by akarin.dev  
 
 ## Requirements  
