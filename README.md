@@ -5,11 +5,11 @@ A simple PHP script that hides video data within image files.
 
 Using [a hook](#on-the-one-handnot-suggested) based on Hls loader:   
 
-* https://somebottle.gitee.io/bottlecos/picvid_demo/
+* https://resources.xbottle.top/picvid_demo/  
 
 Using [`EXT-X-BYTERANGE`](#on-the-other-hand) option in m3u8 file:   
 
-* [https://somebottle.gitee.io/bottlecos/picvid_demo/oyashirosama.html](https://somebottle.gitee.io/bottlecos/picvid_demo/oyashirosama.html)  
+* https://resources.xbottle.top/picvid_demo/oyashirosama.html
 
 AliExpress image hosting has adopted a strategy of converting images to the webp format, so the previous demo based on AliExpress image hosting is no longer functional. The demo has now been migrated to Gitee Pages for learning and reference purposes only. (Video loading may be slightly slow).  
 
